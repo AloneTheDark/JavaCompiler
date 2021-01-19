@@ -1,0 +1,32 @@
+language: cpp
+
+compiler:
+  - g++
+dist: xenial
+
+git:
+  depth: 1
+
+before_install:
+  - sudo apt-get install graphviz
+  - sudo apt-get install cmake
+  - sudo apt install cppcheck
+  - chmod +x run_test.sh
+  - chmod +x run_all_tests.sh
+  - chmod +x run_sca.sh
+
+install:
+  - sudo apt-get install flex
+  - wget http://ftp.gnu.org/gnu/bison/bison-3.4.tar.gz
+  - tar -zxvf bison-3.4.tar.gz
+  - cd bison-3.4/
+  - sudo ./configure
+  - sudo make
+  - sudo make install
+  - cd ..
+  - ls
+
+script:
+  - ./make_all.sh
+  - ./run_sca.sh
+  - ./run_all_tests.sh

@@ -4,7 +4,7 @@
 #include <memory>
 
 #include <yyltype.hpp>
-#include <handlers/visitable.hpp>
+#include <visitors/visitable.hpp>
 #include <visitors/ivisitor.hpp>
 
 #include <handlers/var_declaration.hpp>
@@ -18,11 +18,21 @@ public:
     MethodDeclaration(const std::string &privacy,
                 const PType &type,
                 const std::string &identifier,
+                const std::vector<std::pair<PType, std::string>>& args,
                 const PMethodBody &method_body,
-            MC::YYLTYPE pos) : privacy_(privacy), type_(type), identifier_(identifier), method_body_(method_body) { setPos(pos); }
+                MC::YYLTYPE pos) :
+        identifier_(identifier), args_(args), type_(type), method_body_(method_body),  \
+        privacy_(privacy)
+    {
+        setPos(pos);
+    }
 
     const PType &getType() const {
         return type_;
+    }
+
+    const std::vector<std::pair<PType, std::string>>& getArgs() const {
+        return args_;
     }
 
     const std::string& getPrivacy() const {
@@ -37,9 +47,10 @@ public:
         return method_body_;
     }
 
-    void accept(IVisitor *visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line); }
-protected:
+    void accept(IVisitor *visitor) const { visitor->visit(this); }
+private:
     std::string identifier_;
+    std::vector<std::pair<PType, std::string>> args_;
     PType type_;
     PMethodBody method_body_;
     std::string privacy_;

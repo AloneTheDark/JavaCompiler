@@ -4,6 +4,7 @@
 
 /* Implementation of yyFlexScanner */
 #include "src/mc_scanner.hpp"
+#include "src/errors.hpp"
 #undef  YY_DECL
 #define YY_DECL int MC::MC_Scanner::yylex( MC::MC_Parser::semantic_type * const lval, MC::MC_Parser::location_type *loc )
 
@@ -17,6 +18,7 @@ using token = MC::MC_Parser::token;
 /* update location on matching */
 #define YY_USER_ACTION loc->step(); loc->columns(yyleng);
 
+#define yyterminate() return token::END
 %}
 
 %option debug
@@ -30,10 +32,6 @@ using token = MC::MC_Parser::token;
  * for keywords like "static" must be placed before the regular expression that is responsible
  * for naming variables. Thus, due to a higher priority, words like "this" become *keywords*. */
 
-LEX_AND        "&&"
-LEX_OR         "||"
-LEX_LESS       "<"
-LEX_GREATER    ">"
 LEX_CLASS      "class"
 LEX_PRIVACY    "private"|"public"
 LEX_STATIC     "static"
@@ -44,7 +42,7 @@ LEX_RETURN     "return"
 LEX_IF         "if"
 LEX_ELSE       "else"
 LEX_WHILE      "while"
-LEX_SOUT       "System.out.println"
+LEX_PRINT       "System.out.println"
 LEX_LENGTH     "length"
 LEX_NEW        "new"
 LEX_THIS       "this"
@@ -60,11 +58,12 @@ LEX_LOGIC_LITERAL     {LEX_TRUE}|{LEX_FALSE}
 LEX_ID         {LEX_LETTER}({LEX_DIGIT}|{LEX_LETTER})*
 LEX_COMMENT    (\/\/.*)|(\/\*((.|\n)*?)\*\/)
 LEX_SPACE      [\n\r\t ]+
-LEX_OPERATORS  "+"|"-"|"*"|"/"|LEX_AND|LEX_OR
+LEX_OPERATORS  "+"|"-"|"*"|"/"|"%"|"=="|"&&"|"||"|"<"|">"
 LEX_ASSIGN     "="
 
 LEX_DOT_COMMA ";"
 LEX_DOT "."
+LEX_COMMA ","
 LEX_LBRACKET "("
 LEX_RBRACKET ")"
 LEX_LSQUAREBRACKET "["
@@ -78,6 +77,37 @@ LEX_UNARY_NEGATION "!"
 %{
   yylval = lval;
 %}
+
+
+{LEX_EXTENDS} {
+    return token::EXTENDS;
+}
+
+
+{LEX_BOOLEAN} {
+    return token::BOOLEAN;
+}
+
+
+{LEX_ELSE} {
+    return token::ELSE;
+}
+
+{LEX_PRINT} {
+    return token::PRINT;
+}
+
+{LEX_WHILE} {
+    return token::WHILE;
+}
+
+{LEX_IF} {
+    return token::IF;
+}
+
+{LEX_COMMA} {
+    return token::COMMA;
+}
 
 {LEX_STATIC} {
     return token::STATIC;
@@ -122,31 +152,15 @@ LEX_UNARY_NEGATION "!"
     return token::ASSIGN;
 }
 
-{LEX_OR} {
-    return token::BINOR;
-}
-
-{LEX_LESS} {
-    return token::BINLESS;
-}
-
-{LEX_GREATER} {
-    return token::BINGREATER;
-}
-
-{LEX_AND} {
-    return token::BINAND;
-}
-
 
 {LEX_INTEGER_LITERAL} {
-	//std::cout << " LEX_INTEGER_LITERAL ";
     yylval->build<int>(atoi(yytext));
     return token::INTEGER_LITERAL;
 }
 
 {LEX_LOGIC_LITERAL} {
-    return std::string(yytext) == "true";
+    yylval->build<std::string>(std::string(yytext));
+    return token::LOGICAL_LITERAL;
 }
 
 {LEX_LENGTH} {
@@ -166,14 +180,16 @@ LEX_UNARY_NEGATION "!"
     return token::IDENTIFIER;
 }
 
+{LEX_COMMENT} {
+    // do nothing because we are ignoring comments
+}
+
 {LEX_SPACE} {
     // do nothing because we are ignoring spaces
     // return yytext[0];
-    // std::cout << " LEX_SPACE ";
 }
 
 {LEX_OPERATORS} {
-	//std::cout << " LEX_OPERATORS ";
 	yylval->build<std::string>(yytext);
     return token::OPERATION_LITERAL;
 }
@@ -211,7 +227,14 @@ LEX_UNARY_NEGATION "!"
     return token::UNARY_NEGATION;
 }
 
-.  { std::cout << std::endl << "UNKNOWN  " << yytext << std::endl; }
+<<EOF>>  {
+    yyterminate();
+    return 0;
+}
 
+.  {
+    std::cout << std::endl << "UNKNOWN  " << yytext << std::endl;
+    exit(javacompiler::JC_EXIT_COMP_FAILURE_SYNTERR);
+}
 %%
 

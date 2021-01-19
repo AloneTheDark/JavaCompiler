@@ -2,11 +2,12 @@
 
 #include <string>
 #include <memory>
+#include <iostream>
 
 #include <vector>
-#include <yyltype.hpp>
-#include <handlers/visitable.hpp>
-#include <visitors/ivisitor.hpp>
+#include "yyltype.hpp"
+#include "../ast/visitors/visitable.hpp"
+#include "../ast/visitors/ivisitor.hpp"
 
 namespace ast {
 
@@ -32,7 +33,7 @@ public:
 
     int getValue() const { return value_; }
 
-    void accept(IVisitor *visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line); }
+    void accept(IVisitor *visitor) const { visitor->visit(this); }
 private:
     int value_;
 };
@@ -51,19 +52,14 @@ public:
         std::string &operation,
         const MC::YYLTYPE pos
     ) :
-        left_(left), right_(right), operation_(operation) {
+        operation_(operation), left_(left), right_(right) {
             setPos(pos);
-            if (operation_ == "+") {
-                operation_ = "plus";
-            } else if (operation_ == "-") {
-                operation_ = "minus";
-            }
         }
 
     const PExpression & getLeft() const { return left_; };
     const PExpression & getRight() const { return right_; };
     const std::string & getOp() const { return operation_; };
-    void accept(IVisitor *visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line); }
+    void accept(IVisitor *visitor) const { visitor->visit(this); }
 private:
     std::string operation_;
     PExpression left_;
@@ -78,15 +74,14 @@ typedef std::shared_ptr<ExpressionBinaryOp> PExpressionBinaryOp;
 class ExpressionLogical : public Expression {
 public:
     ExpressionLogical(
-        bool value,
+        std::string& value,
         const MC::YYLTYPE pos
-    ) :
-        value_(value) { setPos(pos); }
+    ) : value_(value) { setPos(pos); }
 
-    bool value() const { return value_; }
-    void accept(IVisitor* visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line); }
+    const std::string getValue() const { return value_; }
+    void accept(IVisitor* visitor) const { visitor->visit(this); }
 private:
-    bool value_;
+    std::string value_;
 };
 
 typedef std::shared_ptr<ExpressionLogical> PExpressionLogical;
@@ -104,7 +99,7 @@ public:
         id_(identifier) { setPos(pos); }
 
     const std::string& getId() const { return id_; };
-    void accept(IVisitor* visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line); }
+    void accept(IVisitor* visitor) const { visitor->visit(this); }
 private:
     std::string id_;
 };
@@ -125,7 +120,7 @@ public:
 
     const PExpression & getEntity() const { return entity_; };
     const PExpression & getIndex() const { return index_; };
-    void accept(IVisitor *visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line); }
+    void accept(IVisitor *visitor) const { visitor->visit(this); }
 private:
     PExpression entity_;
     PExpression index_;
@@ -146,7 +141,7 @@ public:
         arg_(arg) { setPos(pos); }
 
     const PExpression & getArg() const { return arg_; };
-    void accept(IVisitor *visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line); }
+    void accept(IVisitor *visitor) const { visitor->visit(this); }
 private:
     PExpression arg_;
 };
@@ -166,7 +161,7 @@ public:
         arg_(arg) { setPos(pos); }
 
     const PExpression & getArg() const { return arg_; };
-    void accept(IVisitor *visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line); }
+    void accept(IVisitor *visitor) const { visitor->visit(this); }
 private:
     PExpression arg_;
 };
@@ -183,7 +178,7 @@ public:
         const MC::YYLTYPE pos
     ) { setPos(pos); }
 
-    void accept(IVisitor* visitor, bool need_new_line = true) const override { visitor->visit(this, need_new_line); }
+    void accept(IVisitor* visitor) const override { visitor->visit(this); }
 };
 
 typedef std::shared_ptr<ExpressionThis> PExpressionThis;
@@ -200,7 +195,7 @@ public:
                 id_(identifier) { setPos(pos); }
 
     const std::string& getId() const { return id_; };
-    void accept(IVisitor* visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line);}
+    void accept(IVisitor* visitor) const { visitor->visit(this);}
 private:
     std::string id_;
 };
@@ -216,17 +211,38 @@ public:
     ExpressionNewIntArray(
             PExpression &counter,
             const MC::YYLTYPE pos
-            ) : counter_(counter) {}
+            ) : counter_(counter) { setPos(pos); }
 
     const PExpression & getCounter() const { return counter_; };
-    void accept(IVisitor* visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line);}
+    void accept(IVisitor* visitor) const { visitor->visit(this);}
 private:
-    std::shared_ptr<Expression> counter_;
+    PExpression counter_;
 };
 
 typedef std::shared_ptr<ExpressionNewIntArray> PExpressionNewIntArray;
 
 
+
+class ExpressionCallFunction : public Expression {
+public:
+    ExpressionCallFunction(
+            PExpression& expr,
+            const std::string& func_name,
+            const std::vector<PExpression>& args,
+            const MC::YYLTYPE pos
+            ) :  expr_(expr), func_name_(func_name), args_(args) { setPos(pos); }
+
+    const PExpression & getExpr() const { return expr_; }
+    const std::string & getFuncName() const { return func_name_; }
+    const std::vector<PExpression> & getArgs() const { return args_; }
+    void accept(IVisitor* visitor) const { visitor->visit(this);}
+private:
+    PExpression expr_;
+    std::string func_name_;
+    std::vector<PExpression> args_;
+};
+
+typedef std::shared_ptr<ExpressionCallFunction> PExpressionCallFunction;
 
 
 }

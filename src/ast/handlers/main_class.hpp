@@ -5,7 +5,7 @@
 #include <cassert>
 
 #include <yyltype.hpp>
-#include <handlers/visitable.hpp>
+#include <visitors/visitable.hpp>
 #include <visitors/ivisitor.hpp>
 
 #include <handlers/var_declaration.hpp>
@@ -17,10 +17,12 @@ namespace ast {
 class MainClass : public IVisitable {
 public:
     MainClass(const std::string &identifier,
-                const std::string &privacy,
-                const std::string &variable,
-                const PStatement &statement,
-            MC::YYLTYPE pos) : variable_(variable), statement_(statement), identifier_(identifier) {
+              const std::string &privacy,
+              const std::string &variable,
+              const PStatement &statement,
+              MC::YYLTYPE pos) :
+        identifier_(identifier), variable_(variable), statement_(statement)
+    {
         setPos(pos);
         assert(privacy == "public");
     }
@@ -37,8 +39,8 @@ public:
         return statement_;
     }
 
-    void accept(IVisitor *visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line); }
-protected:
+    void accept(IVisitor *visitor) const { visitor->visit(this); }
+private:
     std::string identifier_;
     std::string variable_;
     PStatement statement_;

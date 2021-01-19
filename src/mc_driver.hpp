@@ -9,10 +9,17 @@
 
 #include "mc_scanner.hpp"
 #include "mc_parser.tab.hh"
+#include "errors.hpp"
 #include "ast/handlers/expressions.hpp"
 #include "ast/handlers/statements.hpp"
 #include "ast/visitors/visitor_pretty_printer.hpp"
 #include "ast/visitors/visitor_graphviz.hpp"
+
+#include "ast/visitors/visitor_symbol_table_builder.hpp"
+#include "ast/visitors/visitor_irt_builder.hpp"
+#include "ast/visitors/visitor_typechecker.hpp"
+#include "irt/visitors/visitor_graphviz.hpp"
+
 
 namespace MC {
 
@@ -22,18 +29,20 @@ typedef std::shared_ptr<ast::ExpressionBinaryOp> PExpressionBinaryOp;
 
 class MC_Driver{
 public:
-   MC_Driver() = default;
+    MC_Driver() = default;
 
-   virtual ~MC_Driver();
+    virtual ~MC_Driver();
 
-   // reading from file
-   void parse(const char * const input_filename, const char * const output_filename);
+    void parse(const char * input_filename,
+               const char * output_folder);
 private:
+    void streamTree(const std::string& filename,
+                    const Graphs::UndirectedGraph& graph);
 
-   void parse_helper(std::istream &i_stream, std::ofstream &o_stream);
-   void parse_tree(PExpression new_root);
-   MC::MC_Parser  *parser  = nullptr;
-   MC::MC_Scanner *scanner = nullptr;
+    void pipeline(std::istream &input_stream,
+                  const std::string &output_folder);
+    MC::MC_Parser  *parser  = nullptr;
+    MC::MC_Scanner *scanner = nullptr;
 };
 
 }

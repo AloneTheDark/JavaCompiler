@@ -4,7 +4,7 @@
 #include <memory>
 
 #include <yyltype.hpp>
-#include <handlers/visitable.hpp>
+#include <visitors/visitable.hpp>
 #include <visitors/ivisitor.hpp>
 
 #include <handlers/types.hpp>
@@ -13,7 +13,11 @@ namespace ast {
 
 class VarDeclaration : public IVisitable {
 public:
-    VarDeclaration(const PType &type, const std::string &identifier, MC::YYLTYPE pos) : type_(type), identifier_(identifier) { setPos(pos); }
+    VarDeclaration(const PType &type, const std::string &identifier, MC::YYLTYPE pos) :
+        type_(type), identifier_(identifier)
+    {
+        setPos(pos);
+    }
 
     const PType &getType() const {
         return type_;
@@ -23,10 +27,10 @@ public:
         return identifier_;
     }
 
-    void accept(IVisitor *visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line); }
-protected:
-    std::string identifier_;
+    void accept(IVisitor *visitor) const { visitor->visit(this); }
+private:
     PType type_;
+    std::string identifier_;
 
     void setPos(const MC::YYLTYPE pos) { pos_ = pos; }
 };

@@ -4,7 +4,7 @@
 #include <memory>
 
 #include <yyltype.hpp>
-#include <handlers/visitable.hpp>
+#include <visitors/visitable.hpp>
 #include <visitors/ivisitor.hpp>
 
 #include <handlers/var_declaration.hpp>
@@ -14,27 +14,29 @@ namespace ast {
 
 class MethodBody : public IVisitable {
 public:
-    MethodBody(const PVarDecalartion &var_declarations,
-                const PStatement &statements,
+    MethodBody(const std::vector<PVarDecalartion> &var_declarations,
+                const std::vector<PStatement> &statements,
                 const PExpression &expression,
             MC::YYLTYPE pos) : var_declaration_(var_declarations), statement_(statements), expr_(expression) { setPos(pos); }
 
-    const PVarDecalartion &getVarDeclaration() const {
+
+    const std::vector<PVarDecalartion>& getVarDeclaration() const {
         return var_declaration_;
     }
 
-    const PStatement& getStatement() const {
+    const std::vector<PStatement>& getStatement() const {
         return statement_;
     }
 
+    // return
     const PExpression& getExpression() const {
         return expr_;
     }
 
-    void accept(IVisitor *visitor, bool need_new_line = true) const { visitor->visit(this, need_new_line); }
-protected:
-    PVarDecalartion var_declaration_;
-    PStatement statement_;
+    void accept(IVisitor *visitor) const { visitor->visit(this); }
+private:
+    std::vector<PVarDecalartion> var_declaration_;
+    std::vector<PStatement> statement_;
     PExpression expr_;
 
     void setPos(const MC::YYLTYPE pos) { pos_ = pos; }
